@@ -29,6 +29,9 @@ const INITIAL_METRICS: EngagementMetric[] = Array.from({ length: 15 }, (_, i) =>
   retweets: Math.floor(Math.random() * 100) + 10,
 }));
 
+// Backend API URL - uses environment variable or defaults to localhost
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
 function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [queue, setQueue] = useState<Tweet[]>([]);
@@ -36,7 +39,7 @@ function App() {
   // Fetch queue from backend
   const fetchQueue = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/queue');
+      const response = await fetch(`${API_URL}/api/queue`);
       if (response.ok) {
         const data = await response.json();
         setQueue(data);
@@ -84,7 +87,7 @@ function App() {
 
   const handleAddGeneratedToQueue = async (content: string, scheduledTime?: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/queue', {
+      const response = await fetch(`${API_URL}/api/queue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

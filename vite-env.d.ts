@@ -6,6 +6,7 @@ interface ImportMetaEnv {
     readonly VITE_TWITTER_ACCESS_TOKEN: string
     readonly VITE_TWITTER_ACCESS_SECRET: string
     readonly VITE_GEMINI_API_KEY: string
+    readonly VITE_BACKEND_URL: string
 }
 
 interface ImportMeta {
