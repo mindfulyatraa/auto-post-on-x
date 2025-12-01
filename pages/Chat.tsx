@@ -122,6 +122,8 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  console.log('Chat Rendered. Gemini Key:', geminiKey);
+
   const sendMessage = async (text: string, isGeneratorRequest: boolean = false) => {
     if (!text.trim() || !geminiKey) return;
 
@@ -155,7 +157,7 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
         });
       }
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
