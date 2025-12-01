@@ -3,7 +3,9 @@ import { TwitterApi } from 'twitter-api-v2';
 
 // Initialize Supabase Client
 const supabaseUrl = 'https://hcwmfrudhuubyiwyplik.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhjd21mcnVkaHV1Ynlpd3lwbGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1OTE0MTksImV4cCI6MjA4MDE2NzQxOX0.hhwmpOVWM4pkaVpHvZgieY1YxSzv4JtICfXU5CVrEAE';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhjd21mcnVkaHV1Ynlpd3lwbGlrIiwicm9sZSI6ImF
+
+non","iat":1764591419,"exp":2080167419}.hhwmpOVWM4pkaVpHvZgieY1YxSzv4JtICfXU5CVrEAE';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Initialize Twitter Client
@@ -40,11 +42,30 @@ export default async function handler(request: Request) {
 
         const results = [];
 
-        // 2. Post each tweet
+        // Helper: retry with exponential backoff
+        async function retryWithBackoff(fn: () => Promise<any>, maxRetries = 3) {
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    if (attempt === maxRetries - 1) throw error;
+                    const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                    console.log(`Retry attempt ${attempt + 1} after ${delay}ms`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // 2. Post each tweet with retry logic
         for (const tweet of dueTweets) {
             try {
-                // Post to Twitter
-                await twitterClient.v2.tweet(tweet.content);
+                // Add timestamp to content to ensure uniqueness (avoid duplicate errors)
+                const uniqueContent = `${tweet.content}\n\n#${Date.now()}`.slice(0, 280);
+
+                // Post to Twitter with retry
+                await retryWithBackoff(async () => {
+                    await twitterClient.v2.tweet(uniqueContent);
+                });
 
                 // Update status to posted
                 await supabase
@@ -54,7 +75,7 @@ export default async function handler(request: Request) {
 
                 results.push({ id: tweet.id, status: 'success' });
             } catch (postError) {
-                console.error(`Failed to post tweet ${tweet.id}:`, postError);
+                console.error(`Failed to post tweet ${tweet.id} after retries:`, postError);
 
                 // Update status to failed
                 await supabase
@@ -62,7 +83,7 @@ export default async function handler(request: Request) {
                     .update({ status: 'failed' })
                     .eq('id', tweet.id);
 
-                results.push({ id: tweet.id, status: 'failed', error: postError });
+                results.push({ id: tweet.id, status: 'failed', error: String(postError) });
             }
         }
 
@@ -71,7 +92,7 @@ export default async function handler(request: Request) {
             headers: { 'Content-Type': 'application/json' },
         });
 
-    } catch (err) {
+    } catch (err: any) {
         console.error('Cron job error:', err);
         return new Response(JSON.stringify({ error: err.message }), {
             status: 500,

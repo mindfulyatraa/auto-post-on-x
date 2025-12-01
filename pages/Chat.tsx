@@ -122,8 +122,6 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  console.log('Chat Rendered. Gemini Key:', geminiKey);
-
   const sendMessage = async (text: string, isGeneratorRequest: boolean = false) => {
     if (!text.trim() || !geminiKey) return;
 
@@ -235,6 +233,13 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
 
   const handleSend = () => sendMessage(input);
 
+  // Clear chat and localStorage
+  const handleClearChat = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setMessages([INITIAL_MESSAGE]);
+    setConversationHistory([]);
+  };
+
   const handleGeneratorSubmit = () => {
     if (!genTopic) return;
     // Strict prompt to ensure JSON output for the UI to parse
@@ -302,18 +307,19 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
     <div className="h-full flex flex-col animate-in fade-in duration-500 relative">
       <header className="mb-4 flex justify-between items-center shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-indigo-400" />
-            AI Assistant
-          </h2>
-          <p className="text-slate-400">Chat, brainstorm, and schedule tweets directly from mission control.</p>
-        </div>
-        <button
-          onClick={handleClear}
-          className="text-xs text-slate-500 hover:text-red-400 flex items-center gap-1 transition-colors px-3 py-2 rounded-lg hover:bg-slate-900 border border-transparent hover:border-slate-800"
-        >
-          <Trash2 className="w-4 h-4" /> Clear Chat
-        </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-indigo-400" />
+              <h1 className="text-2xl font-bold text-slate-100">Mission Control</h1>
+            </div>
+          </div>
+          <button
+            onClick={handleClearChat}
+            className="p-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors"
+            title="Clear Chat & Reset"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
       </header>
 
       {/* API Key Check */}
