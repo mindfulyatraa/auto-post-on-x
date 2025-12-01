@@ -67,7 +67,10 @@ function App() {
     autoRetry: true,
   });
 
-  const [geminiKey, setGeminiKey] = useState<string>(import.meta.env.VITE_GEMINI_API_KEY || '');
+  // Gemini API Key state - properly read from .env.local with OpenRouter fallback
+  const [geminiKey, setGeminiKey] = useState<string>(
+    import.meta.env.VITE_GEMINI_API_KEY || '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'
+  );
 
   const handleNavigate = (page: string) => {
     setActivePage(page);
