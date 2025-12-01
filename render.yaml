@@ -1,4 +1,5 @@
 services:
+  # Backend API Server
   - type: web
     name: x-bot-backend
     env: node
@@ -21,3 +22,15 @@ services:
         sync: false
       - key: PORT
         value: 3001
+
+  # Frontend Static Site
+  - type: web
+    name: x-bot-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_BACKEND_URL
+        sync: false
+      - key: VITE_GEMINI_API_KEY
+        sync: false
