@@ -1,57 +1,96 @@
-import { GoogleGenAI, Type } from "@google/genai";
+// OpenRouter AI Service (OpenAI SDK compatible)
+// Using OpenRouter for better reliability and multiple model support
 
 export const generateTweetIdeas = async (
-  apiKey: string, 
-  topic: string, 
-  sentiment: string = 'inspiring, energetic, and slightly futuristic', 
+  apiKey: string,
+  topic: string,
+  sentiment: string = 'inspiring, energetic, and slightly futuristic',
   count: number = 3
 ): Promise<string[]> => {
-  if (!apiKey) throw new Error("API Key is required");
-
-  const ai = new GoogleGenAI({ apiKey });
-
-  // Space Runner persona system instruction
-  const systemInstruction = `You are the social media manager for 'Space Runner', a brand that combines futuristic sci-fi aesthetics with athletic motivation. 
-  Your tone is ${sentiment}. 
-  Keep tweets under 280 characters. 
-  Use hashtags like #SpaceRunner, #FutureFitness, #RunTheGalaxy.
-  Avoid generic advice; make it sound like it's coming from a runner on a spaceship.`;
-
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Generate ${count} distinct tweet ideas about: ${topic}`,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.STRING,
-          },
-        },
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://auto-post-on-x.onrender.com',
+        'X-Title': 'X-Bot Auto Post',
       },
+      body: JSON.stringify({
+        model: 'openai/gpt-3.5-turbo', // Fast and free
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a creative social media expert specializing in engaging Twitter content for a futuristic fitness brand called Space Runner.',
+          },
+          {
+            role: 'user',
+            content: `Generate ${count} unique tweet ideas about "${topic}". Tone: ${sentiment}. Keep each under 280 characters. Return as a JSON array of strings.`,
+          },
+        ],
+        temperature: 0.8,
+      }),
     });
 
-    if (response.text) {
-      return JSON.parse(response.text) as string[];
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.statusText}`);
     }
-    return [];
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    // Try to parse as JSON array
+    try {
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch (e) {
+      // If not JSON, split by newlines
+      return content.split('\n').filter((line: string) => line.trim().length > 0);
+    }
+
+    return [content];
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error('Error generating tweet ideas:', error);
     throw error;
   }
 };
 
 export const checkGrammarAndTone = async (apiKey: string, content: string): Promise<string> => {
-  if (!apiKey) throw new Error("API Key is required");
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://auto-post-on-x.onrender.com',
+        'X-Title': 'X-Bot Auto Post',
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional editor. Improve the grammar, tone, and engagement of social media posts while keeping them under 280 characters.',
+          },
+          {
+            role: 'user',
+            content: `Improve this tweet: "${content}"`,
+          },
+        ],
+        temperature: 0.7,
+      }),
+    });
 
-  const ai = new GoogleGenAI({ apiKey });
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.statusText}`);
+    }
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: `Critique and improve this tweet for the 'Space Runner' brand (sci-fi/athletic theme). Keep it under 280 chars. Return only the improved version.\n\nTweet: "${content}"`,
-  });
-
-  return response.text || content;
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error checking grammar:', error);
+    throw error;
+  }
 };

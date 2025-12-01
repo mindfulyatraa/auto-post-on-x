@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Send, Bot, User, Trash2, Key, Loader2, Sparkles, Plus, Copy, X, Check, MessageSquare, Wand2, Languages, Rocket } from 'lucide-react';
 
 interface ChatProps {
@@ -101,42 +100,30 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
 
   const chatSessionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [conversationHistory, setConversationHistory] = useState<any[]>([]);
 
   // Persistence Effect
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Initialize Chat Session with History
+  // Initialize conversation history from messages
   useEffect(() => {
-    if (geminiKey) {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-
-      // Transform UI messages to Gemini History format
-      // Exclude 'init' message and streaming states to avoid confusing the API
-      const history = messages
-        .filter(m => m.id !== 'init' && !m.isStreaming && !m.text.includes("Connection error"))
-        .map(m => ({
-          role: m.role,
-          parts: [{ text: m.text }]
-        }));
-
-      chatSessionRef.current = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-          systemInstruction: getSystemInstruction(language),
-        },
-        history: history
-      });
-    }
-  }, [geminiKey, language]); // Re-init if key or language preference changes.
+    const history = messages
+      .filter(m => m.id !== 'init' && !m.isStreaming && !m.text.includes("Connection error"))
+      .map(m => ({
+        role: m.role === 'model' ? 'assistant' : 'user',
+        content: m.text
+      }));
+    setConversationHistory(history);
+  }, []); // Re-init if key or language preference changes.
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const sendMessage = async (text: string, isGeneratorRequest: boolean = false) => {
-    if (!text.trim() || !geminiKey || !chatSessionRef.current) return;
+    if (!text.trim() || !geminiKey) return;
 
     const userMessage: Message = { id: Date.now().toString(), role: 'user', text: isGeneratorRequest ? `Generate tweets about: ${genTopic} (${language})` : text };
     setMessages(prev => [...prev, userMessage]);
@@ -144,23 +131,45 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
     setIsLoading(true);
 
     try {
-      const streamResponse = await chatSessionRef.current.sendMessageStream({ message: text });
+      // Build conversation history
+      const history = conversationHistory.concat([
+        { role: 'user', content: text }
+      ]);
 
-      const botMsgId = (Date.now() + 1).toString();
-      setMessages(prev => [...prev, { id: botMsgId, role: 'model', text: '', isStreaming: true }]);
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${geminiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'X-Bot Auto Post',
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: getSystemInstruction(language)
+            },
+            ...history
+          ],
+          temperature: 0.8,
+          stream: false,
+        }),
+      });
 
-      let fullText = '';
-      for await (const chunk of streamResponse) {
-        const c = chunk as GenerateContentResponse;
-        if (c.text) {
-          fullText += c.text;
-          setMessages(prev => prev.map(msg =>
-            msg.id === botMsgId
-              ? { ...msg, text: fullText }
-              : msg
-          ));
-        }
+      if (!response.ok) {
+        throw new Error(`OpenRouter API error: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      let fullText = data.choices[0].message.content;
+
+      // Update conversation history
+      setConversationHistory(prev => [...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: fullText }
+      ]);
 
       // Post-processing: Check if JSON
       let isJson = false;
@@ -194,11 +203,14 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
         }
       }
 
-      setMessages(prev => prev.map(msg =>
-        msg.id === botMsgId
-          ? { ...msg, text: fullText, isStreaming: false, isJson }
-          : msg
-      ));
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: fullText,
+        role: 'model',
+        isJson
+      };
+
+      setMessages(prev => [...prev, botMessage]);
 
     } catch (error) {
       console.error("Chat Error:", error);
