@@ -58,19 +58,17 @@ function App() {
 
 
   const [config, setConfig] = useState<BotConfig>({
-    twitterApiKey: import.meta.env.VITE_TWITTER_API_KEY || '',
-    twitterApiSecret: import.meta.env.VITE_TWITTER_API_SECRET || '',
-    accessToken: import.meta.env.VITE_TWITTER_ACCESS_TOKEN || '',
-    accessSecret: import.meta.env.VITE_TWITTER_ACCESS_SECRET || '',
+    twitterApiKey: 'j2whhxv3SVZkUmERGoc148yt5',
+    twitterApiSecret: 'FeRKb7tVq6bNaXsZx77PoXurFNYToIWUggSYrijf0Hjgm3vcAZ',
+    accessToken: '1995057623360761857-oCClWVYc92siHfdgymtargyAV0jl4V',
+    accessSecret: 'Uv6Xxqp6N0PpahxkTJijgxEwJCzrlSsM3SvRImnNhozxI',
     scheduleTime: '14:00',
     frequency: 'daily',
     autoRetry: true,
   });
 
-  // Gemini API Key state - properly read from .env.local with OpenRouter fallback
-  const [geminiKey, setGeminiKey] = useState<string>(
-    import.meta.env.VITE_GEMINI_API_KEY || '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'
-  );
+  // OpenRouter API Key - hardcoded for easy deployment
+  const [geminiKey, setGeminiKey] = useState<string>('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');
 
   const handleNavigate = (page: string) => {
     setActivePage(page);
