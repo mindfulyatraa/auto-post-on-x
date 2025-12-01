@@ -68,7 +68,7 @@ function App() {
   });
 
   // Google Gemini API Key - hardcoded
-  const [geminiKey, setGeminiKey] = useState<string>('AIzaSyBilT1xbamME8zBS2ztJGidOA2Ghy5ON6I');
+  const [geminiKey, setGeminiKey] = useState<string>('AIzaSyD54LDYeWCgkXxs3mokQSkINRf8_pt0Ie4');
 
   const handleNavigate = (page: string) => {
     setActivePage(page);
