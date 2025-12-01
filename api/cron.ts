@@ -3,9 +3,7 @@ import { TwitterApi } from 'twitter-api-v2';
 
 // Initialize Supabase Client
 const supabaseUrl = 'https://hcwmfrudhuubyiwyplik.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhjd21mcnVkaHV1Ynlpd3lwbGlrIiwicm9sZSI6ImF
-
-non","iat":1764591419,"exp":2080167419}.hhwmpOVWM4pkaVpHvZgieY1YxSzv4JtICfXU5CVrEAE';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhjd21mcnVkaHV1Ynlpd3lwbGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1OTE0MTksImV4cCI6MjA4MDE2NzQxOX0.hhwmpOVWM4pkaVpHvZgieY1YxSzv4JtICfXU5CVrEAE';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Initialize Twitter Client

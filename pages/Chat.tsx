@@ -306,20 +306,17 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-500 relative">
       <header className="mb-4 flex justify-between items-center shrink-0">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-indigo-400" />
-              <h1 className="text-2xl font-bold text-slate-100">Mission Control</h1>
-            </div>
-          </div>
-          <button
-            onClick={handleClearChat}
-            className="p-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors"
-            title="Clear Chat & Reset"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-indigo-400" />
+          <h1 className="text-2xl font-bold text-slate-100">Mission Control</h1>
+        </div>
+        <button
+          onClick={handleClearChat}
+          className="p-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors"
+          title="Clear Chat & Reset"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
       </header>
 
       {/* API Key Check */}
