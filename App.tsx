@@ -29,8 +29,8 @@ const INITIAL_METRICS: EngagementMetric[] = Array.from({ length: 15 }, (_, i) =>
   retweets: Math.floor(Math.random() * 100) + 10,
 }));
 
-// Backend API URL - uses environment variable or defaults to localhost
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+// Backend API URL - relative path for Vercel
+const API_URL = '/api';
 
 function App() {
   const [activePage, setActivePage] = useState('dashboard');
