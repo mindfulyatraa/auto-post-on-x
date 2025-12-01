@@ -67,8 +67,8 @@ function App() {
     autoRetry: true,
   });
 
-  // OpenRouter API Key - hardcoded for easy deployment
-  const [geminiKey, setGeminiKey] = useState<string>('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');
+  // Google Gemini API Key - hardcoded
+  const [geminiKey, setGeminiKey] = useState<string>('AIzaSyBilT1xbamME8zBS2ztJGidOA2Ghy5ON6I');
 
   const handleNavigate = (page: string) => {
     setActivePage(page);

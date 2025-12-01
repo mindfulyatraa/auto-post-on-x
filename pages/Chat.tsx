@@ -131,39 +131,50 @@ export const Chat: React.FC<ChatProps> = ({ geminiKey, setGeminiKey, onAddToQueu
     setIsLoading(true);
 
     try {
-      // Build conversation history
-      const history = conversationHistory.concat([
-        { role: 'user', content: text }
-      ]);
+      // Build conversation history for Gemini
+      // Gemini expects: { role: "user" | "model", parts: [{ text: "..." }] }
+      const contents = conversationHistory.map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Add current message
+      contents.push({
+        role: 'user',
+        parts: [{ text: text }]
+      });
+
+      // Add system instruction as the first part of the first message or use system_instruction field if supported
+      // For simplicity with REST, we can prepend it to the first user message or just rely on the prompt context
+      if (contents.length > 0 && contents[0].role === 'user') {
+        contents[0].parts[0].text = `${getSystemInstruction(language)}\n\n${contents[0].parts[0].text}`;
+      } else {
+        contents.unshift({
+          role: 'user',
+          parts: [{ text: getSystemInstruction(language) }]
+        });
+      }
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${geminiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'X-Bot Auto Post',
         },
         body: JSON.stringify({
-          model: 'openai/gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: getSystemInstruction(language)
-            },
-            ...history
-          ],
-          temperature: 0.8,
-          stream: false,
+          contents: contents,
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 1000,
+          }
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`OpenRouter API error: ${response.statusText}`);
+        throw new Error(`Gemini API error: ${response.statusText}`);
       }
 
       const data = await response.json();
-      let fullText = data.choices[0].message.content;
+      let fullText = data.candidates[0].content.parts[0].text;
 
       // Update conversation history
       setConversationHistory(prev => [...prev,
